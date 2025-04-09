@@ -87,32 +87,6 @@ EU_West_FrontEnd = {
     aws_ec2_key_pair_name = "EU_WEST_WebProd1"
     aws_vpc_cidr          = "10.20.0.0/24"
     aws_subnet_cidr       = "10.20.0.0/24"
-  },
-
-  VPC2 = {
-    aws_vpc_name          = "WebSvcsProdEu2"
-    igw_name              = "WebSvcsProdEu2-IGW"
-    rt_name               = "WebSvcsProdEu2-RT"
-    aws_subnet_name       = "WebSvcsProdEu2-Subnet"
-    private_ip            = "10.20.2.100"
-    app_fqdn              = "app2.infolab.com"
-    aws_ec2_name          = "WebServerProdEu2"
-    aws_ec2_key_pair_name = "EU_WEST_WebProd2"
-    aws_vpc_cidr          = "10.20.2.0/24"
-    aws_subnet_cidr       = "10.20.2.0/24"
-  },
-
-  VPC3 = {
-    aws_vpc_name          = "WebSvcsProdEu3"
-    igw_name              = "WebSvcsProdEu3-IGW"
-    rt_name               = "WebSvcsProdEu3-RT"
-    aws_subnet_name	  = "WebSvcsProdEu3-Subnet"
-    private_ip            = "10.20.3.100"
-    app_fqdn              = "app3.infolab.com"
-    aws_ec2_name          = "WebServerProdEu3"
-    aws_ec2_key_pair_name = "EU_WEST_WebProd3"
-    aws_vpc_cidr          = "10.20.3.0/24"
-    aws_subnet_cidr	  = "10.20.3.0/24"
   }
 }
 
