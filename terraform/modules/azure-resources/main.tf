@@ -97,7 +97,7 @@ resource "azurerm_network_interface" "nic_1" {
   ]
 }
 data "template_file" "apache_install" {
-    template = file("/root/infoblox-lab/Infoblox-PoC/scripts/azure-user-data.sh")
+    template = file("/root/infoblox-lab/secure-ai-infoblox/scripts/azure-user-data.sh")
 }
 
 # Create a Network Security Group
