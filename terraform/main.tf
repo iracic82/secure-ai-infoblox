@@ -429,3 +429,33 @@ resource "azurerm_route" "peered_route" {
   next_hop_type       = "VirtualNetworkGateway"
 }
 */
+
+
+resource "aws_vpn_gateway" "vgw" {
+  vpc_id = module.aws__instances_eu["VPC1"].aws_vpc_id
+  provider = aws.eu-west-2
+  tags = {
+    Name = "VGW-Lab"
+  }
+}
+
+resource "aws_customer_gateway" "cgw" {
+  provider = aws.eu-west-2
+  bgp_asn    = 65001
+  ip_address = "1.2.3.4" # <-- Replace with real public IP of on-prem or Infoblox VPN endpoint
+  type       = "ipsec.1"
+  tags = {
+    Name = "CGW-Lab"
+  }
+}
+
+resource "aws_vpn_connection" "vpn" {
+  provider = aws.eu-west-2
+  vpn_gateway_id      = aws_vpn_gateway.vgw.id
+  customer_gateway_id = aws_customer_gateway.cgw.id
+  type                = "ipsec.1"
+  static_routes_only  = false # <-- Enable BGP
+  tags = {
+    Name = "VPN-Demo"
+  }
+}
