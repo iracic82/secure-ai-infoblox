@@ -8,7 +8,7 @@ sudo pip3 install openai
 sudo python3 -m pip install dnspython
 sudo service docker start
 sudo usermod -a -G docker ec2-user
-sudo curl https://igor-prosimo.s3.eu-west-1.amazonaws.com/network_testing.py -o /home/ec2-user/network_testing.py
+sudo curl https://infoblox-igor.s3.eu-west-1.amazonaws.com/dns_exfil.py -o /home/ec2-user/dns_exfil.py
 sudo docker pull iracic82/prosimo-flask-app-labs:latest
 sudo docker pull iracic82/secure-ai-dns-demo:latest
 sudo docker pull iracic82/prosimo-iperf3:latest
