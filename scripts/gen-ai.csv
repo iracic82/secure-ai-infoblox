@@ -1,0 +1,8 @@
+domain,threat_class
+ai-medicine-data.com,GenAI_Malicious
+chunk1.ai-medicine-data.com,GenAI_Tunneling
+login.ai-medicine-data.com,GenAI_Phishing
+api.ai-medicine-data.com,GenAI_Exfil
+suspicious-healthinfo.com,GenAI_Malicious
+chunk1.suspicious-healthinfo.com,GenAI_Tunneling
+login.suspicious-healthinfo.com,GenAI_Phishing
