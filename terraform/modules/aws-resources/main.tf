@@ -128,6 +128,20 @@ resource "aws_security_group" "sg_allow_access_inbound" {
     ]
   }
   ingress {
+    description = "HTTP"
+    from_port   = 5050
+    to_port     = 5050
+    protocol    = "tcp"
+    cidr_blocks = [
+      "10.0.0.0/8",
+      "20.113.88.59/32",
+      "3.141.133.108/32",
+      "72.14.201.91/32",
+      "85.167.61.227/32",
+      "0.0.0.0/0"
+    ]
+  }
+  ingress {
     description = "allow-tcp-5201"
     from_port   = 5201
     to_port     = 5201
