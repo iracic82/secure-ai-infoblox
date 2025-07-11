@@ -142,6 +142,11 @@ variable "projectid" {
   type = string
 }
 
+variable "instruqt_id" {
+  type        = string
+  description = "Unique ID assigned to each Instruqt participant"
+}
+
 variable "route53_domain_name" {
   description = "The domain name for the private hosted zone"
   type        = string
