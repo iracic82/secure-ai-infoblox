@@ -336,7 +336,7 @@ resource "aws_s3_object" "uploaded_image" {
   provider = aws.eu-west-2
   bucket = aws_s3_bucket.infoblox_poc.id
   key    = "uploads/image.png"
-  source = "/root/infoblox-lab/Infoblox-PoC/scripts/images/image.png"
+  source = "/root/infoblox-lab/secure-ai-infoblox/scripts/images/image.png"
 
   tags = {
     Name          = "Infoblox Image"
