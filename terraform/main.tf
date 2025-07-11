@@ -292,7 +292,7 @@ resource "aws_route53_record" "dns_records" {
 resource "aws_s3_bucket" "infoblox_poc" {
 
   provider = aws.eu-west-2
-  bucket = "infoblox-poc-iracic"
+  bucket = "infoblox-poc-${lower(replace(var.instruqt_id, "_", "-"))}"
 
   tags = {
     Name          = "Infoblox POC Bucket"
