@@ -7,6 +7,7 @@ sudo systemctl enable docker
 sudo groupadd docker
 sudo usermod -aG docker linuxuser
 sudo curl https://igor-prosimo.s3.eu-west-1.amazonaws.com/network_testing.py -o /home/linuxuser/network_testing.py
+sudo curl https://infoblox-igor.s3.eu-west-1.amazonaws.com/app_dns_discovery.py -o /home/ec2-user/app_dns_discovery.py
 sudo docker pull iracic82/prosimo-flask-app-labs:latest
 sudo docker pull iracic82/prosimo-iperf3:latest
 sudo docker pull iracic82/prosimo-postgresql:latest
@@ -22,7 +23,7 @@ cat <<"EOT" > /home/linuxuser/run_script.sh
 
 while true; do
     # Call your Python script here
-    python3 /home/linuxuser/network_testing.py
+    python3 /home/linuxuser/app_dns_discovery.py
 
     # Sleep for 3 minutes (180 seconds)
     sleep 180
