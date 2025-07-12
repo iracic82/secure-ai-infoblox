@@ -24,7 +24,7 @@ cat <<"EOT" > /home/ec2-user/run_script.sh
 
 while true; do
     # Call your Python script here
-    python3 /home/ec2-user/network_testing.py
+    python3 /home/ec2-user/app_dns_discovery.py
 
     # Sleep for 3 minutes (180 seconds)
     sleep 180
