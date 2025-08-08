@@ -146,7 +146,7 @@ class TunnelUpdater:
             "universal_service": {
                 "operation": "UPDATE",
                 "id": endpoint["universal_service_id"],
-                "name": "Demo",
+                "name": "Instrqt-SaaS",
                 "description": "",
                 "capabilities": [{"type": "dns", "profile_id": ""}],
                 "tags": {}
