@@ -6,7 +6,7 @@ sandbox_id_file: sandbox_id.txt
 vpn_payload:
   universal_service:
     operation: CREATE
-    name: DEMO
+    name: Instrqt-SaaS
     capabilities: 
         - type: dns
     tags:
