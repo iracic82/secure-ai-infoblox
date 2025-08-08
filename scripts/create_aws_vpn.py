@@ -5,7 +5,7 @@ import sys
 # Constants
 CUSTOMER_GATEWAY_ASN = 65500
 VGW_TAG_KEY = "Name"
-VGW_TAG_VALUE = "infoblox-lab-vgw"
+VGW_TAG_VALUE = "VGW-Lab"
 PRE_SHARED_KEY = "InfobloxLab.2025"
 CNAME_FILE = "cnames.txt"
 
@@ -44,7 +44,7 @@ def find_vgw_id(ec2):
     return vgw_id
 
 def main():
-    session = boto3.Session(region_name="eu-central-1")
+    session = boto3.Session(region_name="eu-west-2")
     ec2 = session.client("ec2")
 
     tunnels = load_cnames()
