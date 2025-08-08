@@ -3,7 +3,7 @@ import boto3
 OUTPUT_FILE = "aws_tunnels.txt"
 
 def extract_tunnel_ips():
-    ec2 = boto3.client("ec2", region_name="eu-central-1")
+    ec2 = boto3.client("ec2", region_name="eu-west-2")
     vpn_connections = ec2.describe_vpn_connections()["VpnConnections"]
 
     # Collect VPN data with name for sorting
