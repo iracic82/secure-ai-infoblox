@@ -3,6 +3,10 @@ email: ${INFOBLOX_EMAIL}
 password: ${INFOBLOX_PASSWORD}
 sandbox_id_file: sandbox_id.txt
 
+security:
+  enable: true
+  policy_name: Default Global Policy
+
 vpn_payload:
   universal_service:
     operation: CREATE
@@ -67,6 +71,7 @@ vpn_payload:
             hold_down: 90
             keep_alive: 30
     update: []
+  
 
   credentials:
     create:
