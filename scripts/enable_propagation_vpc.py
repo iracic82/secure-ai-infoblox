@@ -1,8 +1,8 @@
 import boto3
 
 REGION = "eu-west-2"
-ROUTE_TAG = "public-rt"
-VGW_TAG = "infoblox-lab-vgw"
+ROUTE_TAG = "WebSvcsProdEu1-RT"
+VGW_TAG = "VGW-Lab"
 
 ec2 = boto3.client("ec2", region_name=REGION)
 
