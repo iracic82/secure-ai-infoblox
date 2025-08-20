@@ -2,6 +2,7 @@ import os
 import json
 import requests
 import time
+import random
 
 class InfobloxSession:
     def __init__(self):
@@ -15,8 +16,10 @@ class InfobloxSession:
 
     def login(self):
         payload = {"email": self.email, "password": self.password}
-        response = self.session.post(f"{self.base_url}/v2/session/users/sign_in", 
-                                     headers=self.headers, json=payload)
+        response = self.session.post(
+            f"{self.base_url}/v2/session/users/sign_in",
+            headers=self.headers, json=payload
+        )
         response.raise_for_status()
         self.jwt = response.json().get("jwt")
         self._save_to_file("jwt.txt", self.jwt)
@@ -25,17 +28,20 @@ class InfobloxSession:
     def switch_account(self):
         sandbox_id = self._read_file("sandbox_id.txt")
         payload = {"id": f"identity/accounts/{sandbox_id}"}
-        headers = self._auth_headers()
-        response = self.session.post(f"{self.base_url}/v2/session/account_switch", 
-                                     headers=headers, json=payload)
+        response = self.session.post(
+            f"{self.base_url}/v2/session/account_switch",
+            headers=self._auth_headers(), json=payload
+        )
         response.raise_for_status()
         self.jwt = response.json().get("jwt")
         self._save_to_file("jwt.txt", self.jwt)
         print(f"✅ Switched to sandbox {sandbox_id} and updated JWT")
 
     def get_current_account(self):
-        response = self.session.get(f"{self.base_url}/v2/current_account", 
-                                    headers=self._auth_headers())
+        response = self.session.get(
+            f"{self.base_url}/v2/current_account",
+            headers=self._auth_headers()
+        )
         response.raise_for_status()
         print("🔍 Current Account Info:")
         print(json.dumps(response.json(), indent=2))
@@ -70,76 +76,129 @@ class InfobloxSession:
             response.raise_for_status()
             print("🔐 AWS key created successfully.")
 
-    def fetch_cloud_credential_id(self):
+    # --------- Hardened waiters with backoff + jitter + periodic session refresh ---------
+
+    def fetch_cloud_credential_id(self, timeout=240, initial_interval=5, max_interval=20):
+        """
+        Poll /api/iam/v1/cloud_credential until an AWS credential is visible.
+        - Treats 403/503 as propagation/transient.
+        - Exponential backoff with jitter.
+        - Refreshes session (login + account switch) every few attempts.
+        """
         url = f"{self.base_url}/api/iam/v1/cloud_credential"
-        print("⏳ Waiting up to 2 minutes for AWS Cloud Credential to appear...")
+        print(f"⏳ Waiting (up to {timeout}s) for AWS Cloud Credential to appear...")
+        start = time.monotonic()
+        interval = initial_interval
+        attempts = 0
 
-        timeout = 120  # total wait time in seconds
-        interval = 10  # check every 10 seconds
-        waited = 0
+        while True:
+            elapsed = time.monotonic() - start
+            if elapsed > timeout:
+                raise RuntimeError(f"❌ Timed out after {timeout}s waiting for AWS Cloud Credential to appear.")
 
-        while waited < timeout:
             try:
-                response = self.session.get(url, headers=self._auth_headers())
-                if response.status_code == 403:
-                    print("🚫 403 Forbidden – likely no access yet or propagation delay")
-                response.raise_for_status()
-                creds = response.json().get("results", [])
+                r = self.session.get(url, headers=self._auth_headers())
+                if r.status_code == 429:
+                    ra = r.headers.get("Retry-After")
+                    sleep_s = int(ra) if (ra and ra.isdigit()) else min(max_interval, max(5, interval))
+                    print(f"⏸️  429 Too Many Requests. Sleeping {sleep_s}s (Retry-After).")
+                    time.sleep(sleep_s)
+                    continue
 
-                for cred in creds:
-                    if cred.get("credential_type") == "Amazon Web Services":
-                        credential_id = cred.get("id")
-                        self._save_to_file("cloud_credential_id.txt", credential_id)
-                        print(f"✅ AWS Cloud Credential ID found and saved: {credential_id}")
-                        return credential_id
+                if r.status_code in (403, 503):
+                    print(f"🚦 {r.status_code} transient ({r.reason}); retrying...")
+                else:
+                    r.raise_for_status()
+                    data = r.json()
+                    creds = data.get("results", []) if isinstance(data, dict) else []
+                    for cred in creds:
+                        if cred.get("credential_type") == "Amazon Web Services":
+                            credential_id = cred.get("id")
+                            self._save_to_file("cloud_credential_id.txt", credential_id)
+                            print(f"✅ AWS Cloud Credential ID found and saved: {credential_id}")
+                            return credential_id
 
-            except requests.HTTPError as e:
-                print(f"❌ Error fetching credentials: {e}")
+            except requests.RequestException as e:
+                print(f"⚠️ Fetch error: {e}; continuing...")
 
-            print(f"🕐 Still waiting... Checked at {waited}s")
-            time.sleep(interval)
-            waited += interval
+            attempts += 1
+            if attempts % 3 == 0:
+                try:
+                    print("🔄 Refreshing session (login + account switch)...")
+                    self.login()
+                    self.switch_account()
+                except Exception as e:
+                    print(f"⚠️ Session refresh failed: {e}")
 
-        raise RuntimeError("❌ Timed out after 2 minutes waiting for AWS Cloud Credential to appear.")
+            sleep_s = min(max_interval, interval) + random.uniform(0, 0.3 * interval)
+            print(f"🕐 Still waiting... elapsed={int(elapsed)}s; next check in ~{sleep_s:.1f}s")
+            time.sleep(sleep_s)
+            interval = min(max_interval, max(initial_interval, interval * 1.7))
 
-    def fetch_dns_view_id(self):
+    def fetch_dns_view_id(self, timeout=240, initial_interval=5, max_interval=20):
+        """
+        Poll /api/ddi/v1/dns/view until at least one DNS View is visible.
+        - Treats 403/503 as propagation/transient.
+        - Exponential backoff with jitter.
+        - Refreshes session (login + account switch) every few attempts.
+        """
         url = f"{self.base_url}/api/ddi/v1/dns/view"
-        print("⏳ Waiting for DNS View to become accessible...")
+        print(f"⏳ Waiting (up to {timeout}s) for DNS View to become accessible...")
+        start = time.monotonic()
+        interval = initial_interval
+        attempts = 0
 
-        timeout = 240
-        interval = 10
-        waited = 0
+        while True:
+            elapsed = time.monotonic() - start
+            if elapsed > timeout:
+                raise RuntimeError("❌ Timed out waiting for DNS View to be available")
 
-        while waited < timeout:
             try:
-                response = self.session.get(url, headers=self._auth_headers())
-                if response.status_code == 403:
-                    print("🚫 403 Forbidden – likely DDI not ready yet")
-                response.raise_for_status()
-                views = response.json().get("results", [])
-                if views:
-                    dns_view_id = views[0].get("id")
-                    self._save_to_file("dns_view_id.txt", dns_view_id)
-                    print(f"✅ DNS View ID saved: {dns_view_id}")
-                    return dns_view_id
-            except requests.HTTPError as e:
-                print(f"❌ Error fetching DNS view: {e}")
+                r = self.session.get(url, headers=self._auth_headers())
+                if r.status_code == 429:
+                    ra = r.headers.get("Retry-After")
+                    sleep_s = int(ra) if (ra and ra.isdigit()) else min(max_interval, max(5, interval))
+                    print(f"⏸️  429 Too Many Requests. Sleeping {sleep_s}s (Retry-After).")
+                    time.sleep(sleep_s)
+                    continue
 
-            print(f"🕐 Still waiting for DNS view... Checked at {waited}s")
-            time.sleep(interval)
-            waited += interval
+                if r.status_code in (403, 503):
+                    print(f"🚦 {r.status_code} transient ({r.reason}); retrying...")
+                else:
+                    r.raise_for_status()
+                    data = r.json()
+                    views = data.get("results", []) if isinstance(data, dict) else []
+                    if views:
+                        dns_view_id = views[0].get("id")
+                        self._save_to_file("dns_view_id.txt", dns_view_id)
+                        print(f"✅ DNS View ID saved: {dns_view_id}")
+                        return dns_view_id
 
-        raise RuntimeError("❌ Timed out waiting for DNS View to be available")
+            except requests.RequestException as e:
+                print(f"⚠️ Fetch error: {e}; continuing...")
+
+            attempts += 1
+            if attempts % 3 == 0:
+                try:
+                    print("🔄 Refreshing session (login + account switch)...")
+                    self.login()
+                    self.switch_account()
+                except Exception as e:
+                    print(f"⚠️ Session refresh failed: {e}")
+
+            sleep_s = min(max_interval, interval) + random.uniform(0, 0.3 * interval)
+            print(f"🕐 Still waiting... elapsed={int(elapsed)}s; next check in ~{sleep_s:.1f}s")
+            time.sleep(sleep_s)
+            interval = min(max_interval, max(initial_interval, interval * 1.7))
+
+    # ------------------ rest unchanged ------------------
 
     def inject_variables_into_payload(self, template_file, output_file, dns_view_id, cloud_credential_id, account_id):
         with open(template_file, "r") as f:
             payload = json.load(f)
 
-        # Inject DNS View ID
         payload["destinations"][0]["config"]["dns"]["view_id"] = dns_view_id
-        # Inject Cloud Credential ID
         payload["source_configs"][0]["cloud_credential_id"] = cloud_credential_id
-        # Inject Account ID
         payload["source_configs"][0]["restricted_to_accounts"] = [account_id]
 
         with open(output_file, "w") as f:
