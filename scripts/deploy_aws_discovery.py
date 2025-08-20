@@ -106,7 +106,7 @@ class InfobloxSession:
         url = f"{self.base_url}/api/ddi/v1/dns/view"
         print("⏳ Waiting for DNS View to become accessible...")
 
-        timeout = 120
+        timeout = 240
         interval = 10
         waited = 0
 
