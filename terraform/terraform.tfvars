@@ -104,6 +104,7 @@ North_US_AppSvcs_VNets = {
     azure_subnet_cidr           = "10.10.1.0/24"
     azure_vnet_cidr             = "10.10.0.0/16"
     azure_private_ip            = "10.10.1.100"
+    enable_peering              = true
   }
 }
 
