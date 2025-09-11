@@ -242,15 +242,34 @@ resource "aws_instance" "ec2_linux" {
 
 }
 
-#Create a Elastic IP
+# Create a standalone Elastic IP
 resource "aws_eip" "eip" {
-  domain                    = "vpc"
-  network_interface         = aws_network_interface.eth1.id
-  associate_with_private_ip = var.private_ip
-  depends_on                = [aws_internet_gateway.igw]
+  domain = "vpc"
   tags = {
     "ResourceOwner" = "iracic@infoblox.com"
   }
 }
+
+# Explicitly associate the EIP with the ENI after the instance is ready
+resource "aws_eip_association" "eip_assoc" {
+  allocation_id        = aws_eip.eip.id
+  network_interface_id = aws_network_interface.eth1.id
+  private_ip_address   = var.private_ip
+
+  depends_on = [
+    aws_instance.ec2_linux
+  ]
+}
+
+#Create a Elastic IP
+#resource "aws_eip" "eip" {
+#  domain                    = "vpc"
+#  network_interface         = aws_network_interface.eth1.id
+#  associate_with_private_ip = var.private_ip
+#  depends_on                = [aws_internet_gateway.igw]
+#  tags = {
+#   "ResourceOwner" = "iracic@infoblox.com"
+#  }
+#}
 
 
