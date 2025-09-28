@@ -35,21 +35,22 @@ sandbox_request_body = {
 # ----------------------------------
 api = SandboxAccountAPI(base_url=BASE_URL, token=TOKEN)
 
-# Add optional idempotency header if supported by API
-api.session.headers.update({"X-Request-ID": str(uuid.uuid4())})
-
 # ----------------------------------
 # Retry logic
 # ----------------------------------
 max_retries = 5
 retryable_statuses = {502, 503, 504}
 
+# Build headers with idempotency key
+headers = {**api._headers(), "X-Request-ID": str(uuid.uuid4())}
+
 create_response = None
 for attempt in range(max_retries):
     try:
-        resp = api.session.post(
+        resp = requests.post(
             f"{BASE_URL}/sandbox/accounts",
             json=sandbox_request_body,
+            headers=headers,
             timeout=(5, 20),  # connect=5s, read=20s
         )
 
