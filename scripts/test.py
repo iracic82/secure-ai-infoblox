@@ -55,7 +55,7 @@ for attempt in range(max_retries):
         )
 
         if resp.status_code in (200, 201):
-            create_response = resp.json()
+            create_response = resp.json()  # raw CSP JSON, not wrapped
             break
         elif resp.status_code in retryable_statuses:
             raise requests.HTTPError(f"Retryable error {resp.status_code}")
@@ -73,7 +73,7 @@ else:
     sys.exit(1)
 
 print("✅ Sandbox created successfully.", flush=True)
-sandbox_data = create_response.get("data", {})
+sandbox_data = create_response  # use raw response
 
 # ----------------------------------
 # Extract sandbox_id
