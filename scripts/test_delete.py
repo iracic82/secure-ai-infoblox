@@ -41,7 +41,7 @@ headers = {**api._headers(), "X-Request-ID": str(uuid.uuid4())}
 for attempt in range(max_retries):
     try:
         print(f"🔗 DELETE {endpoint} (attempt {attempt+1})", flush=True)
-        resp = requests.delete(endpoint, headers=headers, timeout=(5, 20))
+        resp = requests.delete(endpoint, headers=headers, timeout=(5, 60))
 
         if resp.status_code in (200, 204):
             print(f"✅ Sandbox {sandbox_id} deleted.", flush=True)
