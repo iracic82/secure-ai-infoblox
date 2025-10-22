@@ -7,6 +7,7 @@ sudo pip3 install urllib3==1.26.15
 sudo pip3 install openai
 sudo python3 -m pip install dnspython
 sudo service docker start
+sudo systemctl enable docker
 sudo usermod -a -G docker ec2-user
 sudo curl https://infoblox-igor.s3.eu-west-1.amazonaws.com/dns_exfil.py -o /home/ec2-user/dns_exfil.py
 sudo curl https://infoblox-igor.s3.eu-west-1.amazonaws.com/app_dns_discovery.py -o /home/ec2-user/app_dns_discovery.py
@@ -16,7 +17,7 @@ sudo docker pull iracic82/prosimo-iperf3:latest
 sudo docker pull iracic82/prosimo-postgresql:latest
 sudo docker pull iracic82/prosimo-flask-sqlclient:latest
 sudo docker pull iracic82/prosimo-security-api:latest
-sudo docker run -d -p 5050:5050 -e FLASK_SECRET_KEY=supersecurekey9876 -e BEDROCK_REGION=eu-west-2 -e BEDROCK_MODEL_ID=amazon.titan-text-lite-v1 iracic82/secure-ai-dns-demo:latest
+sudo docker run -d --restart always -p 5050:5050 -e FLASK_SECRET_KEY=supersecurekey9876 -e BEDROCK_REGION=eu-west-2 -e BEDROCK_MODEL_ID=amazon.titan-text-lite-v1 iracic82/secure-ai-dns-demo:latest
 sudo docker run -d --name iperf-server -p 5201:5201/tcp -p 5201:5201/udp -p 5201:5201/sctp iracic82/prosimo-iperf3:latest -s
 
 cat <<"EOT" > /home/ec2-user/run_script.sh
