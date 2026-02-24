@@ -51,7 +51,7 @@ variable "azure_instance_name" {
 variable "azure_vm_size" {
   description = "VM Size of the Instance"
   type        = string
-  default     = "Standard_DS1_v2"
+  default     = "Standard_D2s_v3"
 }
 
 variable "azure_admin_username" {
