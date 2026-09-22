@@ -48,7 +48,7 @@ vpn_payload:
         type: Cloud VPN
         name: SITE
         cloud_type: AWS
-        cloud_region: eu-central-1
+        cloud_region: eu-west-2
         lan_subnets: []
     update: []
     delete: []
@@ -58,7 +58,7 @@ vpn_payload:
       - id: ref_endpoint_Test
         name: Test
         size: S
-        service_location: AWS Europe (Frankfurt)
+        service_location: AWS Europe (London)
         service_ip: 10.10.10.3
         neighbour_ips:
           - 10.10.10.4
