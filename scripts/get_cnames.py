@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import yaml
 import json
 import requests
@@ -46,20 +47,33 @@ class InfobloxCNAMEFetcher:
         print(f"🔁 Switched to sandbox account {sandbox_id}")
         time.sleep(3)
 
-    def fetch_cnames(self, output_file="cnames.txt"):
-        url = f"{self.base_url}/api/universalinfra/v1/endpoints/"
-        r = requests.get(url, headers=self.headers)
-        r.raise_for_status()
-        data = r.json()
+    def fetch_cnames(self, output_file="cnames.txt", attempts=60, interval=10):
+        """Wait for the PoP's Cloud Service IPs, then save them.
 
-        cnames = data.get("result", {}).get("cnames", [])
-        if not cnames:
-            print("⚠️ No CNAMEs found in response.")
-        else:
-            with open(output_file, "w") as f:
-                for cname in cnames:
-                    f.write(f"{cname}\n")
-            print(f"📄 Saved CNAMEs to {output_file}")
+        The service is launched during lab setup and takes a few minutes to
+        provision, so poll rather than assuming the addresses are there yet.
+        Two are needed: one per tunnel path.
+        """
+        url = f"{self.base_url}/api/universalinfra/v1/endpoints/"
+
+        for attempt in range(1, attempts + 1):
+            r = requests.get(url, headers=self.headers)
+            r.raise_for_status()
+            cnames = r.json().get("result", {}).get("cnames", [])
+
+            if len(cnames) >= 2:
+                with open(output_file, "w") as f:
+                    for cname in cnames:
+                        f.write(f"{cname}\n")
+                print(f"✅ Cloud Service IPs: {cnames}")
+                print(f"📄 Saved CNAMEs to {output_file}")
+                return
+
+            print(f"⏳ Waiting for Cloud Service IPs... ({attempt}/{attempts})", flush=True)
+            time.sleep(interval)
+
+        sys.exit(f"❌ Cloud Service IPs did not appear after {attempts * interval // 60} minutes. "
+                 f"Check the NIOS-X-as-a-Service deployment in the Infoblox Portal.")
 
 if __name__ == "__main__":
     client = InfobloxCNAMEFetcher("config_vpn.yaml")
